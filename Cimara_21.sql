@@ -41,12 +41,8 @@ appartamento più piccolo posseduto*/
 /*7. I proprietari che hanno il nome che inizia con L e il loro appartamento in cui hanno investito di più su spese speciali*/
 select proprietari.CodPro
 from proprietari
-where proprietari.Proprietario like "L%" and (	select count(spese.Importo)
-												from spese
-                                                inner join spesaspeciale on spesaspeciale.NSpesa = spesaspeciale.NSpesa);
-
-
-
-
-
-
+where proprietari.Proprietario like "L%" 
+having (select max(spe.totImp)
+		from (	select count(spese.Importo)
+				from spese
+				inner join spesaspeciale on spesaspeciale.NSpesa = spesaspeciale.NSpesa) as spe);
