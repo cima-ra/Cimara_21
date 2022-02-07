@@ -35,14 +35,83 @@ group by pagamenti.CodPro
 order by sum(pagamenti.Importo) desc
 limit 3;
 
-/*6. Il proprietario che possiede il minor totale di superficie di appartamenti e
-appartamento più piccolo posseduto*/
+/*6. Il proprietario che possiede il minor totale di superficie di appartamenti e appartamento più piccolo posseduto*/
+
 
 /*7. I proprietari che hanno il nome che inizia con L e il loro appartamento in cui hanno investito di più su spese speciali*/
-select proprietari.CodPro
+select sum(spese.Importo) as totPagato, proprietari.Proprietario
+from spese
+inner join spesaspeciale on spesaspeciale.NSpesa = spese.NSpesa
+inner join appartamenti on appartamenti.codApp = spesaspeciale.CodApp
+inner join proprietari on proprietari.CodPro = appartamenti.CodPro
+where proprietari.Proprietario like "L%"
+group by proprietari.CodPro
+order by sum(spese.Importo) desc
+limit 3;
+
+/*8. Gli appartamenti ordinati in maniera decrescente per media di superficie delle stanze*/
+select CodApp, avg(Superficie/NVani) as mediaSuperficePerVano
+from appartamenti
+group by CodApp
+order by avg(Superficie/NVani) desc;
+
+/*9. Anno in cui si è speso di più in spese non speciali*/
+select date_format(spese.DataSpesa, "%Y") as annoMaggiorSpeseNonSpeciali
+from spese 
+where NSpesa not in (	select NSpesa 
+						from spesaspeciale)
+group by date_format(spese.DataSpesa, "%Y")
+having sum(Importo) = ( select max(spe.imp)
+						from ( 	select sum(spese.importo) as imp
+								from spese
+								where NSpesa not in (	select NSpesa 
+														from spesaspeciale)
+								group by date_format(spese.DataSpesa, "%Y")) as spe);
+	
+/*10.Elenco degli inquilini che non sono proprietari di un appartamento*/
+select Inquilino
+from appartamenti
+where Inquilino not in (	select Proprietario
+							from proprietari) and Inquilino like "_%"; /*Qui ho messo questa condizione siccome l'appartamento 444 come inquilino c'è uno spazio vuoto che conta*/
+                            
+/*11.Trovare proprietario con più appartamenti*/
+select proprietari.Proprietario
 from proprietari
-where proprietari.Proprietario like "L%" 
-having (select max(spe.totImp)
-		from (	select count(spese.Importo)
-				from spese
-				inner join spesaspeciale on spesaspeciale.NSpesa = spesaspeciale.NSpesa) as spe);
+inner join appartamenti on appartamenti.CodPro = proprietari.CodPro
+group by appartamenti.CodPro
+having count(CodApp) = 	(	select max(conta.NumAppartamenti)
+							from (	select count(CodApp) as NumAppartamenti
+									from appartamenti
+									group by CodPro) as conta);
+
+/*12.Dati degli appartamenti che hanno una spesa maggiore della spesa speciale minima di un qualsiasi appartamento*/
+
+/*13.La superficie che supera la media delle superfici di tutti gli appartamenti in cui il proprietario non è "Link" o "Zelda"*/
+select appartamenti.superficie, proprietari.Proprietario
+from appartamenti
+inner join proprietari on proprietari.CodPro = appartamenti.CodPro
+where proprietario <> "Link" or proprietario <> "Zelda"
+having appartamenti.superficie > avg(superficie);
+
+
+/*14.Stampare l'importo totale dei pagamenti effettuati da ogni singolo proprietario che superano 400€.*/
+select CodPro, sum(Importo) as totPagamenti
+from pagamenti
+group by CodPro
+having sum(Importo) > 400;
+
+/*15.Elenco dei proprietari che non hanno eseguito pagamenti*/
+select proprietari.Proprietario
+from proprietari 
+where proprietari.CodPro not  in (	select CodPro
+									from pagamenti);
+                                    
+/*16.Totale pagamenti dei proprietari di appartamenti di superficie sopra la media*/
+select sum(pagamenti.importo) as TotalePagamenti, proprietari.CodPro, appartame
+from appartamenti 
+inner join proprietari on proprietari.codPro = appartamenti.CodPro
+inner join pagamenti on pagamenti.CodPro = proprietari.CodPro
+where superficie > (select avg(superficie/NVani)
+					from appartamenti)
+group by proprietari.CodPro;
+
