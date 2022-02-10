@@ -36,7 +36,14 @@ order by sum(pagamenti.Importo) desc
 limit 3;
 
 /*6. Il proprietario che possiede il minor totale di superficie di appartamenti e appartamento più piccolo posseduto*/
-
+select proprietari.Proprietario, appartamenti.codApp
+from proprietari
+inner join appartamenti on appartamenti.CodPro = proprietari.CodPro
+group by proprietari.CodPro
+having sum(appartamenti.Superficie) = ( select min(superfici.somma)
+										from (	select sum(superficie) as somma
+												from appartamenti
+                                                group by codPro) as superfici) and min(appartamenti.Superficie);
 
 /*7. I proprietari che hanno il nome che inizia con L e il loro appartamento in cui hanno investito di più su spese speciali*/
 select sum(spese.Importo) as totPagato, proprietari.Proprietario
@@ -122,7 +129,40 @@ left join spesaspeciale on spesaspeciale.CodApp=appartamenti.codApp
 left join spese on spese.NSpesa=spesaspeciale.NSpesa
 group by appartamenti.CodPro;
 
-/*18.Restituire l’elenco degli Appartamenti per cui non sono state effettuate spese speciali, solo nel caso in cui il proprietario abbia saldo sufficiente per pagare le spese.*/
+/*18.Restituire l’elenco degli Appartamenti per cui non sono state effettuate spese speciali, 
+solo nel caso in cui il proprietario abbia saldo sufficiente per pagare le spese.*/
+select appartamenti.codApp
+from appartamenti
+inner join spesaspeciale on spesaspeciale.CodApp = appartamenti.codApp
+where spesaspeciale.NSpesa not in (	select NSpesa
+									from spese)
+group by appartamenti.codApp;
+
+/*19.Determinare il numero di telefono del proprietario e la data della spesa con importo minimo*/
+select spese.DataSPesa, proprietari.Telefono
+from spese
+inner join spesaspeciale on spesaspeciale.NSpesa = spese.NSpesa
+inner join appartamenti on appartamenti.codApp = spesaspeciale.CodApp
+inner join proprietari on proprietari.CodPro = appartamenti.CodPro
+where spese.Importo = (	select min(spese.Importo)
+						from spese);
+                        
+/*20.Restituire CodApp dell’appartamento il cui proprietario ha il saldo minore della
+media dei saldi di tutti i proprietari*/
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
